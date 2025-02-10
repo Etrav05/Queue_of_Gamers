@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <random>
+#include <time.h>
 
 #define NAME_LEN			10
 #define NUM_OF_USERS		20
@@ -41,7 +43,7 @@
 typedef struct user {
 	char name[NAME_LEN];
 	char faction[5];
-	int level;
+	int lvl;
 } USER;
 
 typedef struct queue {
@@ -97,6 +99,26 @@ void initializeQueue(QUEUE* q, int capacity) {
 	q->head = -1;
 	q->tail = 0;
 	q->size = 0;
+}
+
+void randomUsername(char* str) { // make a random username 
+	char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // list off all the characters to choose from
+	int charsetSize = sizeof(charset) - 1; // exclude the null terminator
+
+	srand(time(NULL)); // seed the random function
+
+	for (int i = 0; i < NAME_LEN; i++) {
+		int randI = rand() % charsetSize; // choose a random element of the character set
+		str[i] = charset[randI]; // create a string of these choices
+	}
+
+	str[NAME_LEN] = '\0'; // add null-terminator to the string
+}
+
+USER createRandomUser(char name[], char faction[], int lvl) {
+
+
+
 }
 
 int main(int argc, char* argv[]) { // accept commandlin args (this will be the amount of users) --> 20)
