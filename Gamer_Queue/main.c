@@ -3,6 +3,7 @@
 #include <random>
 #include <time.h>
 
+#define FACTION				5
 #define NAME_LEN			10
 #define NUM_OF_USERS		20
 
@@ -21,8 +22,8 @@
 //		- A function to check if the queue is empty [X]
 //		- A function to enqueue a node              [X]
 //		- A function to dequeue a node              [X]
-//		- Create a struct to represent a queue node [ ]
-//		- This structure contains a node pointer and a user struct as its data [ ]
+//		- Create a struct to represent a queue node [X]
+//		- This structure contains a node pointer and a user struct as its data [X]
 
 // - Write a function to enqueue the queue with a number of randomly created users [ ]
 // - You will need to pass this function a pointer to an initialized queue         [ ]
@@ -42,24 +43,28 @@
 
 typedef struct user {
 	char name[NAME_LEN];
-	char faction[5];
+	char faction[FACTION];
 	int lvl;
 } USER;
 
+typedef struct queueNode {
+	USER user;                // user data
+	struct queueNode* next;  // pointer to the next node in the queue
+} QUEUENODE, *PQUEUENODE;
+
 typedef struct queue {
-	USER* arr;	  // array of users
-	int head;	  // first in line
-	int tail;     // back of the line
-	int capacity; // maximum capacity of the queue
-	int size;     // current number of elements in the queue
-}QUEUE;
+	PQUEUENODE head;    // pointer to the head of the queue
+	PQUEUENODE tail;    // pointer to the tail of the queue
+	int capacity;        // maximum capacity of the queue
+	int size;            // current number of elements in the queue
+} QUEUE;
 
 bool isEmpty(QUEUE* q) { 
-	return (q->head == q->tail - 1); // this will return -1 if the queue is empty (because head and tail will == -1)
+	return q->size == 0; // this will return -1 if the queue is empty (because head and tail will == -1)
 }
 
 bool isFull(QUEUE* q) { 
-	return (q->tail == NUM_OF_USERS); 
+	return (q->tail == q->capacity); 
 }
 
 USER enqueue(QUEUE* q, USER u) {
@@ -68,9 +73,25 @@ USER enqueue(QUEUE* q, USER u) {
 		return;
 	}
 
-	q->arr[q->tail] = u; // if not, then add user to queue at the tail
-	q->tail = (q->tail + 1); // % q->capacity; // move the tail pointer
-	q->size++; // move the tail pointer to the next item
+	PQUEUENODE newNode = (PQUEUENODE)malloc(sizeof(QUEUENODE));
+	if (!newNode) {
+		printf("Error allocating memory to queue node\n");
+		exit(1);
+	}
+
+	newNode->user = u;  // assign user to new node
+	newNode->next = NULL;
+
+	if (isEmpty(q)) { // if the queue is empty this new node will be both the tail and head
+		q->head = newNode;
+		q->tail = newNode;
+	}
+	else { // if the queue already has stuff in it, then the tail will now be this new node
+		q->tail->next = newNode; 
+		q->tail = newNode;
+	}
+
+	q->size++; // the queue has grown
 }
 
 USER dequeue(QUEUE* q) {
@@ -81,27 +102,36 @@ USER dequeue(QUEUE* q) {
 		return emptyUser;
 	}
 
-	USER user = q->arr[q->head]; // take the item at the front of the queue
-	q->head++; // move the head pointer to the next item
+	PQUEUENODE temp = q->head; // if queue isnt empty then get the node at the head
+	USER user = temp->user;
 
+	q->head = q->head->next; // after dequeuing, move the head pointer to the node behind head
+
+	if (q->head == NULL) { // if the queue has now become empty, then the tail should be set to NULL
+		q->tail = NULL;
+	}
+
+	free(temp);
+
+	q->size--; // the queue has decreased
 	return user; // return item that was dequeued
 }
 
-void initializeQueue(QUEUE* q, int capacity) {
-	q->capacity = capacity;
-	q->arr = (USER*)malloc(capacity * sizeof(USER)); // allocate memory for the queue
+QUEUE* initializeQueue(int capacity) {
+	QUEUE* q = (QUEUE*)malloc(sizeof(QUEUE)); // allocate memory for the queue
 
-	if (q->arr == NULL) { // error handling
-		printf("Problem occured while allocating memory\n");
+	if (!q) { // error handling
+		printf("Error allocating memory to queue\n");
 		exit(1); // exit the if the memory allocation fails
 	}
 
-	q->head = -1;
-	q->tail = 0;
+	q->head = NULL;
+	q->tail = NULL;
+	q->capacity = capacity;
 	q->size = 0;
 }
 
-void randomUsername(char* str) { // make a random username 
+void randomUser(char* str) { // make a random username 
 	char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // list off all the characters to choose from
 	int charsetSize = sizeof(charset) - 1; // exclude the null terminator
 
@@ -110,7 +140,11 @@ void randomUsername(char* str) { // make a random username
 	for (int i = 0; i < NAME_LEN; i++) {
 		int randI = rand() % charsetSize; // choose a random element of the character set
 		str[i] = charset[randI]; // create a string of these choices
-	}
+	};
+
+	USER user = { " " };
+
+	enqueue(q, );
 
 	str[NAME_LEN] = '\0'; // add null-terminator to the string
 }
@@ -122,9 +156,11 @@ USER createRandomUser(char name[], char faction[], int lvl) {
 }
 
 int main(int argc, char* argv[]) { // accept commandlin args (this will be the amount of users) --> 20)
-	QUEUE q;
-	int capacity = atoi(argv[1]); // the command line arg (20) = capacity
+	QUEUE* q = initializeQueue(argv[1]); 
 
-	initializeQueue(&q, capacity);
 
+
+	free(q);
+
+	return 0;
 }
